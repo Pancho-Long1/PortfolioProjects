@@ -1,0 +1,148 @@
+
+Select *
+From [Data Science and ML Analysis].[dbo].[kaggle_survey_2022_responses$]
+
+-- Changing the Column from Q8 to "Formal Education"
+-- NOTE: Formal Education also implies what one has planned to take in future years
+
+EXEC sp_rename '[Data Science and ML Analysis].[dbo].[kaggle_survey_2022_responses$].Q8','Formal_Education','COLUMN';
+
+
+-- Displaying the Complete Table
+
+Select Formal_Education
+From [Data Science and ML Analysis].[dbo].[kaggle_survey_2022_responses$]
+
+-- Deleting NULL Rows Within the Type of Education 
+
+DELETE FROM [Data Science and ML Analysis].[dbo].[kaggle_survey_2022_responses$]
+WHERE Formal_Education IS NULL;
+
+-- Organizing the Education Types From Earliest Form of Education to Latest
+
+Select Formal_Education
+From [Data Science and ML Analysis].[dbo].[kaggle_survey_2022_responses$]
+ORDER BY
+  CASE Formal_Education
+    WHEN 'What is the highest level of formal education that you have attained or plan to attain within the next 2 years?' THEN 1
+    WHEN 'I prefer not to answer' THEN 2
+	WHEN 'No formal education past high school' THEN 3
+	WHEN 'Some college/university study without earning a bachelor’s degree' THEN 4
+	WHEN 'Bachelor’s degree' THEN 5
+	WHEN 'Master’s degree' THEN 6
+	WHEN 'Professional doctorate' THEN 7
+	WHEN 'Doctoral degree' THEN 8
+	ELSE 9999
+END;
+
+-- Checking to see if I missed any distinct values
+
+SELECT COUNT (DISTINCT Formal_Education) AS Different_Possible_Answers
+FROM [Data Science and ML Analysis].[dbo].[kaggle_survey_2022_responses$];
+
+
+Select DISTINCT Formal_Education
+From [Data Science and ML Analysis].[dbo].[kaggle_survey_2022_responses$]
+
+--Deleting Old Column Title
+
+DELETE FROM [Data Science and ML Analysis].[dbo].[kaggle_survey_2022_responses$]
+WHERE Formal_Education = 'What is the highest level of formal education that you have attained or plan to attain within the next 2 years?';
+
+--Renaming Q29 to Salary
+
+Exec sp_rename '[Data Science and ML Analysis].[dbo].[kaggle_survey_2022_responses$].Q29','Salary','Column';
+
+Select Formal_Education, Salary 
+From [Data Science and ML Analysis].[dbo].[kaggle_survey_2022_responses$]
+ORDER BY Salary
+
+-- Clearing Unncesesary Aspects of the Salary Information
+
+DELETE FROM [Data Science and ML Analysis].[dbo].[kaggle_survey_2022_responses$]
+WHERE Salary
+
+-- Renaming Q4 to Country Column
+
+Exec sp_rename '[Data Science and ML Analysis].[dbo].[kaggle_survey_2022_responses$].Q4','Country','Column';
+
+Select Formal_Education, Salary, Country
+From [Data Science and ML Analysis].[dbo].[kaggle_survey_2022_responses$]
+ORDER BY Salary
+
+-- Creating a New Table for the Information I Will be Using
+
+SELECT 
+    Formal_Education,
+	Salary,
+	Country
+INTO Eduation_and_Data_Science
+FROM [Data Science and ML Analysis].[dbo].[kaggle_survey_2022_responses$]
+
+-- Displaying the New 'Education_And_Data_Science Table'
+
+Select *
+FROM Eduation_and_Data_Science
+
+-- Clearing unecessary symbols from the numerical information
+
+SELECT TOP (1000) [Formal_Education]
+      ,[Salary]
+      ,[Country]
+  FROM [Data Science and ML Analysis].[dbo].[Eduation_and_Data_Science]
+
+  UPDATE Eduation_and_Data_Science
+  SET Salary = Replace(Salary, ',', '')
+
+  UPDATE Eduation_and_Data_Science
+  SET Salary = Replace(Salary, '$', '')
+-- Getting GNI information for my project on the correlation between education and income in the data science industry
+-- Creatin a table only with usefull information
+
+SELECT Country, Continent,[Gross National Income Per Capita (2021)]
+INTO GNI_For_Degrees
+FROM [Data Science and ML Analysis].[dbo].['Gross National Income Per Capita']
+
+SELECT *
+FROM GNI_For_Degrees
+Order By [Gross National Income Per Capita (2021)] DESC
+
+-- Chaning terms to ensure they can join correctly with the data science income table I am using
+
+UPDATE GNI_For_Degrees
+SET Country = 'United States of America'
+Where Country = 'United States'
+
+-- Remvoing all of the decial points from the GNI infromation for clarity
+
+UPDATE GNI_For_Degrees
+SET [Gross National Income Per Capita (2021)] = 
+    CAST(LEFT(CONVERT(VARCHAR,[Gross National Income Per Capita (2021)]), CHARINDEX('.', CONVERT(VARCHAR, [Gross National Income Per Capita (2021)]) +'.') -1 ) AS FLOAT) 
+WHERE CHARINDEX('.', CONVERT(VARCHAR,[Gross National Income Per Capita (2021)])) > 
+
+Select Column_Name, Data_Type
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'GNI_For_Degrees'
+
+DELETE FROM GNI_For_Degrees
+WHERE Country IN ('Armenia', 'Bulgaria', 'Belarus', 'Canada', 'Switzerland', 'Equatorial Guinea', 'Hungary', 'Iceland', 'Liechtenstein', 'Serbia', 'Slovenia', 'Trinidad and Tobago')
+
+UPDATE GNI_For_Degrees
+SET [Gross National Income Per Capita (2021)] = 33033
+WHERE Country = 'Poland'
+
+
+UPDATE GNI_For_Degrees
+SET [Gross National Income Per Capita (2021)] = 76168
+WHERE Country = 'Ireland'
+
+-- Removing NUlls
+
+DELETE FROM GNI_For_Degrees
+WHERE [Gross National Income Per Capita (2021)] IS NULL
+
+
+
+
+
+
